@@ -1,0 +1,31 @@
+{
+    "0112AL251029": {
+        "name": "GulshanRahangdale",
+        "branch": "Artificial Intelligence and Data Science (AI&DS)",
+        "semester": "3",
+        "year": "2",
+        "degree": "B.Tech",
+        "marks": {
+            "Data Structure": {
+                "mst1": 10,
+                "mst2": null
+            },
+            "AI": {
+                "mst1": 15,
+                "mst2": null
+            },
+            "OOPM": {
+                "mst1": 10,
+                "mst2": null
+            },
+            "Introduction to Probability": {
+                "mst1": 5,
+                "mst2": null
+            },
+            "Technical Communication": {
+                "mst1": 10,
+                "mst2": null
+            }
+        }
+    }
+}

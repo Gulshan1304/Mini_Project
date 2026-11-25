@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Student Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div>
+                <p class="eyebrow">COLLEGE RECORDS</p>
+                <h1>Student Management</h1>
+            </div>
+            <a class="top-link" href="#records">View records ↓</a>
+        </div>
+    </header>
+
+    <main class="page-shell">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="panel intro-panel">
+            <div>
+                <p class="eyebrow">STUDENT DETAILS</p>
+                <h2>Add student information first</h2>
+                <p class="muted">
+                    Enter the student's details now. Add MST 1 marks when available,
+                    then MST 2 marks later.
+                </p>
+            </div>
+        </section>
+
+        <section class="panel form-panel" id="add-student">
+            <form action="{{ url_for('add_student') }}" method="post">
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Student name</span>
+                        <input name="name" type="text" placeholder="e.g. Asha Kumar" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Enrollment number</span>
+                        <input name="enrollment" type="text" placeholder="e.g. 0112AL251029" required>
+                    </label>
+
+                    <label class="field">
+                        <span>Branch</span>
+                        <select name="branch" id="branch-select" required>
+                            <option value="" disabled selected>Select branch</option>
+                            {% for branch in branches %}
+                                <option value="{{ branch }}">{{ branch }}</option>
+                            {% endfor %}
+                            <option value="Other">Other</option>
+                        </select>
+                    </label>
+
+                    <label class="field" id="other-branch-field" hidden>
+                        <span>Enter branch name</span>
+                        <input name="branch_other" id="branch-other" type="text" placeholder="Your branch">
+                    </label>
+
+                    <label class="field">
+                        <span>Semester</span>
+                        <select name="semester" required>
+                            <option value="" disabled selected>Select semester</option>
+                            {% for number in range(1, 9) %}
+                                <option value="{{ number }}">Semester {{ number }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Year</span>
+                        <select name="year" required>
+                            <option value="" disabled selected>Select year</option>
+                            {% for number in range(1, 5) %}
+                                <option value="{{ number }}">Year {{ number }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Degree</span>
+                        <input name="degree" type="text" placeholder="e.g. B.Tech" required>
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button class="button primary" type="submit">Add student</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="records-heading" id="records">
+            <div>
+                <p class="eyebrow">SAVED DATA</p>
+                <h2>Student records <span class="count">{{ students|length }}</span></h2>
+            </div>
+        </section>
+
+        {% if students %}
+            <div class="student-list">
+                {% for enrollment, student in students.items() %}
+                    <article class="panel student-card">
+                        <div class="student-heading">
+                            <div>
+                                <h3>{{ student.name }}</h3>
+                                <p class="enrollment">Enrollment No. {{ enrollment }}</p>
+                            </div>
+
+                            <div class="student-tags">
+                                <span>{{ student.branch }}</span>
+                                <span>Semester {{ student.semester }}</span>
+                                <span>Year {{ student.year }}</span>
+                                <span>{{ student.degree }}</span>
+                            </div>
+                        </div>
+
+                        <div class="marks-grid">
+                            <section class="marks-panel">
+                                <div class="section-title">
+                                    <div>
+                                        <h4>MST 1</h4>
+                                        <p>Out of 20 · pass mark {{ mst1_pass_mark }}</p>
+                                    </div>
+                                </div>
+
+                                <form action="{{ url_for('save_mst1', enrollment=enrollment) }}" method="post">
+                                    <div class="marks-fields">
+                                        {% for subject in subjects %}
+                                            <label class="mark-field">
+                                                <span>{{ subject }}</span>
+                                                <input
+                                                    type="number"
+                                                    name="mst1_{{ loop.index0 }}"
+                                                    min="0"
+                                                    max="20"
+                                                    step="1"
+                                                    value="{{ student.marks[subject].mst1 if student.marks[subject].mst1 is not none else '' }}"
+                                                    placeholder="—"
+                                                    required
+                                                >
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                    <button class="button secondary" type="submit">Save MST 1 marks</button>
+                                </form>
+                            </section>
+
+                            <section class="marks-panel">
+                                <div class="section-title">
+                                    <div>
+                                        <h4>MST 2</h4>
+                                        <p>Out of 30 · pass mark {{ mst2_pass_mark }}</p>
+                                    </div>
+                                </div>
+
+                                {% set mst1_complete = namespace(value=true) %}
+                                {% for subject in subjects %}
+                                    {% if student.marks[subject].mst1 is none %}
+                                        {% set mst1_complete.value = false %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if mst1_complete.value %}
+                                    <form action="{{ url_for('save_mst2', enrollment=enrollment) }}" method="post">
+                                        <div class="marks-fields">
+                                            {% for subject in subjects %}
+                                                <label class="mark-field">
+                                                    <span>{{ subject }}</span>
+                                                    <input
+                                                        type="number"
+                                                        name="mst2_{{ loop.index0 }}"
+                                                        min="0"
+                                                        max="30"
+                                                        step="1"
+                                                        value="{{ student.marks[subject].mst2 if student.marks[subject].mst2 is not none else '' }}"
+                                                        placeholder="—"
+                                                        required
+                                                    >
+                                                </label>
+                                            {% endfor %}
+                                        </div>
+                                        <button class="button secondary" type="submit">Save MST 2 marks</button>
+                                    </form>
+                                {% else %}
+                                    <p class="pending-note">
+                                        Enter all MST 1 marks before adding MST 2.
+                                    </p>
+                                {% endif %}
+                            </section>
+                        </div>
+
+                        <div class="record-actions">
+                            <form
+                                action="{{ url_for('delete_student', enrollment=enrollment) }}"
+                                method="post"
+                                onsubmit="return confirm('Delete this student record?');"
+                            >
+                                <button class="button danger" type="submit">Delete student</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <section class="panel empty-state">
+                <div class="empty-icon">＋</div>
+                <h3>No student records yet</h3>
+                <p>Add student information above to get started.</p>
+            </section>
+        {% endif %}
+
+        <footer>Student records are saved in the local JSON data file.</footer>
+    </main>
+
+    <script>
+        const branchSelect = document.getElementById("branch-select");
+        const otherBranchField = document.getElementById("other-branch-field");
+        const otherBranchInput = document.getElementById("branch-other");
+
+        branchSelect.addEventListener("change", () => {
+            const isOther = branchSelect.value === "Other";
+            otherBranchField.hidden = !isOther;
+            otherBranchInput.required = isOther;
+
+            if (!isOther) {
+                otherBranchInput.value = "";
+            }
+        });
+    </script>
+</body>
+</html>
